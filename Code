@@ -1,0 +1,37 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+
+void delay(int seconds) {
+    sleep(seconds);
+}
+
+int main() {
+    int alarmHour, alarmMinute;
+    printf("Enter alarm time (HH:MM): ");
+    scanf("%d:%d", &alarmHour, &alarmMinute);
+
+    time_t now;
+    struct tm *alarmTime;
+    int stopwatchSeconds = 0;  // Stopwatch initial value
+
+    while (1) {
+        time(&now);
+        alarmTime = localtime(&now);
+
+        if (alarmTime->tm_hour == alarmHour && alarmTime->tm_min == alarmMinute) {
+            printf("\n\n\n\n\t\t\t\t\t|| T I M E   T O   W A K E   U P! ||\n\n\n");
+            printf("\a");
+            break;
+        }
+
+        printf("Stopwatch: %02d:%02d:%02d\r", stopwatchSeconds / 3600, (stopwatchSeconds % 3600) / 60, stopwatchSeconds % 60);
+        fflush(stdout);  // Flush output to update stopwatch display
+
+        delay(1); // Check every 1 second
+        stopwatchSeconds++;
+    }
+
+    return 0;
+}
