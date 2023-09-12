@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <SDL2/SDL.h>
 
 void delay(int seconds) {
     sleep(seconds);
@@ -14,7 +15,29 @@ int main() {
 
     time_t now;
     struct tm *alarmTime;
-    int stopwatchSeconds = 0;  // Stopwatch initial value
+    int stopwatchSeconds = 0;  
+    SDL_Init(SDL_INIT_AUDIO); 
+
+    SDL_AudioSpec wavSpec;
+    Uint32 wavLength;
+    Uint8 *wavBuffer;
+
+    if (SDL_LoadWAV("alarm.wav", &wavSpec, &wavBuffer, &wavLength) == NULL) {
+        fprintf(stderr, "Failed to load sound: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    
+    SDL_AudioDeviceID audioDevice = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
+
+    if (audioDevice == 0) {
+        fprintf(stderr, "Failed to open audio device: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    
+    SDL_QueueAudio(audioDevice, wavBuffer, wavLength);
+    SDL_PauseAudioDevice(audioDevice, 0);
 
     while (1) {
         time(&now);
@@ -22,14 +45,24 @@ int main() {
 
         if (alarmTime->tm_hour == alarmHour && alarmTime->tm_min == alarmMinute) {
             printf("\n\n\n\n\t\t\t\t\t|| T I M E   T O   W A K E   U P! ||\n\n\n");
-            printf("\a");
+
+           
+            while (SDL_GetQueuedAudioSize(audioDevice) > 0) {
+                SDL_Delay(100);
+            }
+
+            
+            SDL_CloseAudioDevice(audioDevice);
+            SDL_FreeWAV(wavBuffer);
+            SDL_Quit();
+
             break;
         }
 
         printf("Stopwatch: %02d:%02d:%02d\r", stopwatchSeconds / 3600, (stopwatchSeconds % 3600) / 60, stopwatchSeconds % 60);
-        fflush(stdout);  // Flush output to update stopwatch display
-
-        delay(1); // Check every 1 second
+        fflush(stdout);
+          
+        delay(1); 
         stopwatchSeconds++;
     }
 
